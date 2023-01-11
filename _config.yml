@@ -13,23 +13,20 @@
 # you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: MatJek
+title: Japan Microsoft Orcas Support
 description: > # this means to ignore newlines until "baseurl:"
-  Material theme based on <a href="http://materializecss.com">Materialize.css</a> for jekyll sites
-baseurl: "/matjek"
-url: "https://shawnteoh.github.io"
-permalink: /:year/:month/:day/:title
-repository: ShawnTeoh/matjek
+  Japan Microsoft Orcas Support Team Training Website
+baseurl: "/"
+url: "https://xiao-yao-tn.github.io"
+permalink: /:title
+repository: xiao-yao-tn/xiao-yao-tn.github.io
 paginate: 5
 
 # MatJek specific configurations
-github_profile: "https://github.com/ShawnTeoh"
-user: "John Doe"
-user_email: "john@doe.com"
-contact_url: "https://goo.gl/tVljbV"
-google_tracking_id: "UA-96359860-1"
-google_site_verification: "UA-96359860-1"
-disqus_shortname: "matjek"
+github_profile: "https://github.com/xiao-yao-tn"
+user: "Yao Xiao"
+user_email: "yaoxiao@microsoft.com"
+contact_url: ""
 
 # Build settings
 markdown: kramdown
