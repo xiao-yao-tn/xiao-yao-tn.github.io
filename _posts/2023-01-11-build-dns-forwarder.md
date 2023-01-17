@@ -2,11 +2,11 @@
 layout: post
 title:  "Let's build a DNS forwarder on Azure"
 date:   2023-01-11 00:00:00 +0900
-categories: Hands On
+categories: HandsOn
 tags: PostgreSQL MySQL DNS
 comments: 1
 ---
-## Why you need a DNS forwarder on Azure
+#### Why you need a DNS forwarder on Azure
 
 When you deploy a PostgreSQL/MySQL flexible server into an Azure Vnet, 
 the server will not have a public IP address, 
@@ -14,60 +14,60 @@ but will get a private IP address belonging to the Vnet.
 Because the private IP belongs to the Vnet, 
 the FQDN of flexible server cannot be resolved by using any public DNS server like 8.8.8.8.
 
-![build-dns-forwarder-image-1.png](..%2Fassets%2Fres%2Fbuild-dns-forwarder-image-1.png)
+![build-dns-forwarder-image-1.png](https://github.com/xiao-yao-tn/xiao-yao-tn.github.io/blob/gh-pages/assets/res/build-dns-forwarder-image-1.png)
 
 If your client exists in an Azure Vnet, 
 you can easily use Azure's DNS server(168.63.129.16) to resolve the FQDN of your flexible server.
 But if your client exist in other network environments, 
 you will not be able to use the Azure DNS server directly and this is why you need a DNS forwarder to forward DNS requests to Azure DNS server.
 
-![bulid-dns-forwarder-image-2.png](..%2Fassets%2Fres%2Fbulid-dns-forwarder-image-2.png)
+![bulid-dns-forwarder-image-2.png](https://github.com/xiao-yao-tn/xiao-yao-tn.github.io/blob/gh-pages/assets/res/bulid-dns-forwarder-image-2.png)
 
 You can find more information about DNS forwarder at [here][link1].
 
-## Let's ROCK!
+#### Let's ROCK!
 
-1. Create a new RG
+##### Create a new RG
 
-`az group create --name handsOn --location japaneast`
+```az group create --name handsOn --location japaneast```
 
-2. Create a new VNET and subnet
+##### Create a new VNET and subnet
 
-`az network vnet create --name handsOnVnet --resource-group handsOn --address-prefixes 10.100.0.0/16`
+```az network vnet create --name handsOnVnet --resource-group handsOn --address-prefixes 10.100.0.0/16```
 
-`az network vnet subnet create --name dnsForwarderSubnet --vnet-name handsOnVnet --resource-group handsOn --address-prefixes 10.100.0.0/24`
+```az network vnet subnet create --name dnsForwarderSubnet --vnet-name handsOnVnet --resource-group handsOn --address-prefixes 10.100.0.0/24```
 
-3. Create a new VM
+##### Create a new VM 
 
-`az vm create -n dnsForwarderVm -g handsOn --image UbuntuLTS --admin-username handson --admin-password handsOn12345678 --vnet-name handsOnVnet --subnet dnsForwarderSubnet --public-ip-address-allocation static`
+```az vm create -n dnsForwarderVm -g handsOn --image UbuntuLTS --admin-username handson --admin-password handsOn12345678 --vnet-name handsOnVnet --subnet dnsForwarderSubnet --public-ip-address-allocation static```
 
-4. List NSGs in RG. (If an empty returned, just skip step 4 and 5)
+##### List NSGs in RG. (If an empty returned, just skip step 4 and 5)
 
-`az network nsg list --resource-group handsOn --query []."name"`
+```az network nsg list --resource-group handsOn --query []."name"```
 
-5. Add NSG rules
+##### Add NSG rules
 
-`az network nsg rule create -g handsOn --nsg-name dnsForwarderVmNsg -n Allow22 --priority 100 --access Allow --direction Inbound --destination-port-ranges 22`
+```az network nsg rule create -g handsOn --nsg-name dnsForwarderVmNsg -n Allow22 --priority 100 --access Allow --direction Inbound --destination-port-ranges 22```
 
-`az network nsg rule create -g handsOn --nsg-name dnsForwarderVmNsg -n Allow53 --priority 101 --access Allow --direction Inbound --destination-port-ranges 53`
+```az network nsg rule create -g handsOn --nsg-name dnsForwarderVmNsg -n Allow53 --priority 101 --access Allow --direction Inbound --destination-port-ranges 53```
 
-6. Get public IP of VM
+##### Get public IP of VM
 
-`az vm show -g handsOn -n dnsForwarderVm -d --query "publicIps"`
+```az vm show -g handsOn -n dnsForwarderVm -d --query "publicIps"```
 
-7. SSH into your VM
+##### SSH into your VM
 
-`ssh handson@xxx.xxx.xxx.xxx`
+```ssh handson@xxx.xxx.xxx.xxx```
 
-8. Install DNS service on your VM
+##### Install DNS service on your VM
 
-`sudo apt update`
+```sudo apt update```
 
-`sudo apt install bind9`
+```sudo apt install bind9```
 
-9. Modify DNS service config file
+##### Modify DNS service config file
 
-`sudo vi /etc/bind/named.conf.options`
+```sudo vi /etc/bind/named.conf.options```
 
 ```
 options {
@@ -123,21 +123,21 @@ options {
 };
 ```
 
-10. Restart bind9
+##### Restart bind9
 
-`sudo systemctl restart bind9`
+```sudo systemctl restart bind9```
 
-11. Create a private DNS zone link (If the DNS forwarder and Flexible server are in same VNET, just skip this)
+##### Create a private DNS zone link (If the DNS forwarder and Flexible server are in same VNET, just skip this)
 
 We are going to do this via Azure portal. Firstly, we open the network setting of Flexible server to see which private DNS is bound.
 
-![build-dns-forwarder-image-3.png](..%2Fassets%2Fres%2Fbuild-dns-forwarder-image-3.png)
+![build-dns-forwarder-image-3.png](https://github.com/xiao-yao-tn/xiao-yao-tn.github.io/blob/gh-pages/assets/res/build-dns-forwarder-image-3.png)
 
 Then, we open private DNS zone detail page, and create a new Virtual network link.
 
-![build-dns-forwarder-image-4.png](..%2Fassets%2Fres%2Fbuild-dns-forwarder-image-4.png)
+![build-dns-forwarder-image-4.png](https://github.com/xiao-yao-tn/xiao-yao-tn.github.io/blob/gh-pages/assets/res/build-dns-forwarder-image-4.png)
 
-![build-dns-forwarder-image-5.png](..%2Fassets%2Fres%2Fbuild-dns-forwarder-image-5.png)
+![build-dns-forwarder-image-5.png](https://github.com/xiao-yao-tn/xiao-yao-tn.github.io/blob/gh-pages/assets/res/build-dns-forwarder-image-5.png)
 
 
 [link1]: https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns#on-premises-workloads-using-a-dns-forwarder
