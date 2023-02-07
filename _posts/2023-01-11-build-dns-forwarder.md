@@ -1,12 +1,12 @@
 ---
 layout: post
-title:  "Let's build a DNS forwarder on Azure"
+title:  "Let's build a DNS forwarder in Azure"
 date:   2023-01-11 00:00:00 +0900
 categories: HandsOn
 tags: PostgreSQL MySQL DNS
 comments: 1
 ---
-#### Why you need a DNS forwarder on Azure
+#### Why you need a DNS forwarder in Azure
 
 When you deploy a PostgreSQL/MySQL flexible server into an Azure Vnet, 
 the server will not have a public IP address, 
@@ -30,51 +30,51 @@ You can find more information about DNS forwarder at [here][link1].
 ##### Create a new RG
 {% highlight shell %}
 az group create --name handsOn --location japaneast
-{% endhighlight  %}
+{% endhighlight %}
 
 ##### Create a new VNET and subnet
 {% highlight shell %}
 az network vnet create --name handsOnVnet --resource-group handsOn --address-prefixes 10.100.0.0/16
 az network vnet subnet create --name dnsForwarderSubnet --vnet-name handsOnVnet --resource-group handsOn --address-prefixes 10.100.0.0/24
-{% endhighlight  %}
+{% endhighlight %}
 
 
 ##### Create a new VM
 {% highlight shell %}
 az vm create -n dnsForwarderVm -g handsOn --image UbuntuLTS --admin-username handson --admin-password handsOn12345678 --vnet-name handsOnVnet --subnet dnsForwarderSubnet --public-ip-address-allocation static
-{% endhighlight  %}
+{% endhighlight %}
 
 ##### List NSGs in RG. (If an empty returned, just skip step 4 and 5)
 {% highlight shell %}
 az network nsg list --resource-group handsOn --query []."name"
-{% endhighlight  %}
+{% endhighlight %}
 
 ##### Add NSG rules
 {% highlight shell %}
-az network nsg rule create -g handsOn --nsg-name dnsForwarderVmNsg -n Allow22 --priority 100 --access Allow --direction Inbound --destination-port-ranges 22
-az network nsg rule create -g handsOn --nsg-name dnsForwarderVmNsg -n Allow53 --priority 101 --access Allow --direction Inbound --destination-port-ranges 53
-{% endhighlight  %}
+az network nsg rule create -g handsOn --nsg-name dnsForwarderVmNsg -n Allow22 --priority 100 --protocol * --access Allow --direction Inbound --destination-port-ranges 22
+az network nsg rule create -g handsOn --nsg-name dnsForwarderVmNsg -n Allow53 --priority 101 --protocol * --access Allow --direction Inbound --destination-port-ranges 53
+{% endhighlight %}
 
 ##### Get public IP of VM
 {% highlight shell %}
 az vm show -g handsOn -n dnsForwarderVm -d --query "publicIps"
-{% endhighlight  %}
+{% endhighlight %}
 
 ##### SSH into your VM
 {% highlight shell %}
 ssh handson@xxx.xxx.xxx.xxx
-{% endhighlight  %}
+{% endhighlight %}
 
 ##### Install DNS service on your VM
 {% highlight shell %}
 sudo apt update
 sudo apt install bind9
-{% endhighlight  %}
+{% endhighlight %}
 
 ##### Modify DNS service config file
 {% highlight shell %}
 sudo vi /etc/bind/named.conf.options
-{% endhighlight  %}
+{% endhighlight %}
 
 ```
 options {
@@ -133,7 +133,7 @@ options {
 ##### Restart bind9
 {% highlight shell %}
 sudo systemctl restart bind9
-{% endhighlight  %}
+{% endhighlight %}
 
 ##### Create a private DNS zone link (If the DNS forwarder and Flexible server are in same VNET, just skip this)
 
