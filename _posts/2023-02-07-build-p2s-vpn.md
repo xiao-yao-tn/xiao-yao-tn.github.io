@@ -21,25 +21,19 @@ You can find more information about P2S VPN at [here][link1].
 
 #### Let's ROCK!
 
-##### Create a new RG
+##### Create a new subnet in your vnet
 {% highlight shell %}
-az group create --name handsOn --location japaneast
-{% endhighlight %}
-
-##### Create a new VNET and subnet
-{% highlight shell %}
-az network vnet create --name handsOnVnet --resource-group handsOn --address-prefixes 10.100.0.0/16
-az network vnet subnet create --name gatewaySubnet --vnet-name handsOnVnet --resource-group handsOn --address-prefixes 10.100.1.0/24
+az network vnet subnet create --name gatewaySubnet --vnet-name <your-vent-name> --resource-group <your-RG> --address-prefixes <your-ip-range>
 {% endhighlight %}
 
 #### Create a public IP address
 {% highlight shell %}
-az network public-ip create --name gatewayIp --resource-group handsOn
+az network public-ip create --name gatewayIp --resource-group <your-RG>
 {% endhighlight %}
 
 ##### Create a new VPN gateway
 {% highlight shell %}
-az network vnet-gateway create --name handsOnGateway --resource-group handsOn --vnet handsOnVnet --public-ip-address gatewayIp --gateway-type Vpn --vpn-type RouteBased
+az network vnet-gateway create --name handsOnGateway --resource-group <your-RG> --vnet <your-vent-name>  --public-ip-address gatewayIp --gateway-type Vpn --vpn-type RouteBased
 {% endhighlight %}
 
 #### Create a root certificate
