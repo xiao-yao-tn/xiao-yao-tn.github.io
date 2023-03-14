@@ -1,25 +1,32 @@
-# Use Bicep to deploy resources and update setting
+---
+layout: post
+title:  "Use Bicep to deploy resources and update setting"
+date:   2023-03-17 09:00:00 +0900
+categories: HandsOn
+tags: MySQL Bicep
+comments: 1
+---
 
-## Instruction
-### what is Becep
+#### Instruction
+##### what is Becep
 * Bicep is a domain-specific language (DSL) that uses declarative syntax to deploy Azure resources.
 * Bicep has simpler syntax compared to JSON.
 * Official wiki: https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview?tabs=bicep
 
-### Bicep and ARM
+##### Bicep and ARM
 * Both Bicep and ARM are using REST API.
 * Almost anything that can be done in an ARM Template can also be done in Bicep. 
 * Bicep is simply an easier and less error-prone process to generate ARM templates.
   > Attention: When using bicep to deploy or update, the opertaion will be recorded by activity log.
 
-## Get started with Bicep
-### Prerequirement
+#### Get started with Bicep
+##### Prerequirement
 * Visual Studio Code [install]([https://code.visualstudio.com/]).
 * Bicep extension for Visual Studio Code (To install the extension, search for <em>bicep</em> in the <strong>Extensions</strong> tab).
 * Azure CLI or Azure Powershell
 
-### Deploy a resource
-#### In this part, we are trying to deploy a private access MySQL flexible server.
+##### Deploy a resource
+In this part, we are trying to deploy a private access MySQL flexible server.
 
 * Create a <em>main.bicep</em> file on Visual Studio Code 
 * Paste below sample code into it.
@@ -29,8 +36,6 @@
   >Tips: You can check the resource dependency by click "Open bicep visualizer" on the upper right corner.
 
 
-
-        
 {% highlight shell %}
 //Pass the value to each parameter at the beginning. 
 
@@ -193,8 +198,8 @@ az deployment group create --resource-group exampleRG --template-file main.bicep
 {% endhighlight %}
 
 
-### Update a resource
-#### In this part, we will update some setting of this MySQL flexible server.
+##### Update a resource
+In this part, we will update some setting of this MySQL flexible server.
 
 * Create a <em>update.bicep</em> file on Visual Studio Code 
   In this file, input the properties that you want to update. You can check the details about allowed parameter/property [here]([https://learn.microsoft.com/en-us/azure/templates/microsoft.dbformysql/flexibleservers?pivots=deployment-language-bicep])
