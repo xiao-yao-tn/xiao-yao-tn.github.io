@@ -7,11 +7,11 @@ tags: MySQL Bicep
 comments: 1
 ---
 
-#### Instruction
-##### what is Becep
+#### Introduction
+##### what is Bicep
 * Bicep is a domain-specific language (DSL) that uses declarative syntax to deploy Azure resources.
 * Bicep has simpler syntax compared to JSON.
-* Official wiki: https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview?tabs=bicep
+* Official [wiki](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview?tabs=bicep).
 
 ##### Bicep and ARM
 * Both Bicep and ARM are using REST API.
@@ -22,8 +22,8 @@ comments: 1
 #### Get started with Bicep
 ##### Prerequirement
 * Visual Studio Code [install]([https://code.visualstudio.com/]).
-* Bicep extension for Visual Studio Code (To install the extension, search for <em>bicep</em> in the <strong>Extensions</strong> tab).
-* Azure CLI or Azure Powershell
+* Bicep extension for Visual Studio Code.
+* Azure Tool Extension for Visual Studio Code.
 
 ##### Deploy a resource
 In this part, we are trying to deploy a private access MySQL flexible server.
@@ -41,17 +41,17 @@ In this part, we are trying to deploy a private access MySQL flexible server.
 
 //@description can be used to briefly describe the parameter.
 @description('Server Name for Azure database for MySQL')
-param serverName string = 'jiebicepmysql'
+param serverName string = 'bicepmyfs'
 
 @description('Name for DNS Private Zone')
-param dnsZoneName string = 'jiebicepmyfsdnszone'
+param dnsZoneName string = 'bicepmyfsdnszone'
 
 @description('Fully Qualified DNS Private Zone')
 param dnsZoneFqdn string = '${dnsZoneName}.private.mysql.database.azure.com'
 
 @description('Database administrator login name')
 @minLength(1)
-param administratorLogin string = 'zhjie'
+param administratorLogin string = 'admin'
 
 @description('Database administrator password')
 @minLength(8)
@@ -92,10 +92,10 @@ param backupRetentionDays int = 7
 param geoRedundantBackup string = 'Disabled'
 
 @description('Virtual Network Name')
-param virtualNetworkName string = 'azure_mysql_vnet'
+param virtualNetworkName string = 'bicepvnet'
 
 @description('Subnet Name')
-param subnetName string = 'azure_mysql_subnet'
+param subnetName string = 'bicepsub'
 
 @description('Virtual Network Address Prefix')
 param vnetAddressPrefix string = '10.0.0.0/24'
@@ -104,98 +104,98 @@ param vnetAddressPrefix string = '10.0.0.0/24'
 param mySqlSubnetPrefix string = '10.0.0.0/28'
 
 @description('Composing the subnetId')
-var mysqlSubnetId =  '${vnetLink.properties.virtualNetwork.id}/subnets/${subnetName}'
 
 //Create Vnet
 resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
-name: virtualNetworkName
-location: location
-properties: {
-    addressSpace: {
-    addressPrefixes: [
-        vnetAddressPrefix
-    ]
+    name: virtualNetworkName
+    location: location
+    properties: {
+        addressSpace: {
+        addressPrefixes: [
+            vnetAddressPrefix
+        ]
+        }
     }
 }
 
 //Create subnet
-resource subnet 'subnets@2021-05-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2022-07-01' = {
     name: subnetName
+    parent: vnet
     properties: {
-    addressPrefix: mySqlSubnetPrefix
-    delegations: [
-        {
-        name: 'dlg-Microsoft.DBforMySQL-flexibleServers'
-        properties: {
-            serviceName: 'Microsoft.DBforMySQL/flexibleServers'
-        }
-        }
-    ]
-    privateEndpointNetworkPolicies: 'Enabled'
-    privateLinkServiceNetworkPolicies: 'Enabled'
+        addressPrefix: mySqlSubnetPrefix
+        delegations: [
+            {
+                name: 'dlg-Microsoft.DBforMySQL-flexibleServers'
+                properties: {
+                    serviceName: 'Microsoft.DBforMySQL/flexibleServers'
+                }
+            }
+        ]
+        privateEndpointNetworkPolicies: 'Enabled'
+        privateLinkServiceNetworkPolicies: 'Enabled'
     }
 }
-}
+
 
 //Create DNS zone
 resource dnszone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-name: dnsZoneFqdn
-location: 'global'
+    name: dnsZoneFqdn
+    location: 'global'
 }
 
 //Create Vnetlink int dns zone
 resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-name: vnet.name
-parent: dnszone
-location: 'global'
-properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-    id: vnet.id
+    name: vnet.name
+    parent: dnszone
+    location: 'global'
+    properties: {
+        registrationEnabled: false
+        virtualNetwork: {
+        id: vnet.id
+        }
     }
-}
 }
 
 //Create mysql flexible server
 resource server 'Microsoft.DBforMySQL/flexibleServers@2021-05-01' = {
-name: serverName
-location: location
-sku: {
-    name: skuName
-    tier: SkuTier
+    name: serverName
+    dependsOn: [
+        vnetLink
+    ]
+    location: location
+    sku: {
+        name: skuName
+        tier: SkuTier
+    }
+    properties: {
+        administratorLogin: administratorLogin
+        administratorLoginPassword: administratorLoginPassword
+        storage: {
+            autoGrow: 'Enabled'
+            iops: StorageIops
+            storageSizeGB: StorageSizeGB
+        }
+        createMode: 'Default'
+        version: mysqlVersion
+        backup: {
+            backupRetentionDays: backupRetentionDays
+            geoRedundantBackup: geoRedundantBackup
+        }
+        highAvailability: {
+            mode: 'Disabled'
+        }
+        network: {
+            delegatedSubnetResourceId: subnet.id
+            privateDnsZoneResourceId: dnszone.id
+        }
+    }
 }
-properties: {
-    administratorLogin: administratorLogin
-    administratorLoginPassword: administratorLoginPassword
-    storage: {
-    autoGrow: 'Enabled'
-    iops: StorageIops
-    storageSizeGB: StorageSizeGB
-    }
-    createMode: 'Default'
-    version: mysqlVersion
-    backup: {
-    backupRetentionDays: backupRetentionDays
-    geoRedundantBackup: geoRedundantBackup
-    }
-    highAvailability: {
-    mode: 'Disabled'
-    }
-    network: {
-    delegatedSubnetResourceId: mysqlSubnetId
-    privateDnsZoneResourceId: dnszone.id
-    }
-}
-}
+
 {% endhighlight %}
 
-* Upload the <em>main.bicep</em> file to the Cloudshell.
-* Run the below command to create the resource group where we will deploy all the resource, and deploy the <em>main.bicep</em> file.
-
-{% highlight shell %}
-az group create --name exampleRG --location eastus
-az deployment group create --resource-group exampleRG --template-file main.bicep
-{% endhighlight %}
+* Right click the <em>main.bicep</em> file choose "Deploy Bicep File".
+* Enter the parameter value you want to change.
 
 
 ##### Update a resource
@@ -203,26 +203,22 @@ In this part, we will update some setting of this MySQL flexible server.
 
 * Create a <em>update.bicep</em> file on Visual Studio Code 
   In this file, input the properties that you want to update. You can check the details about allowed parameter/property [here]([https://learn.microsoft.com/en-us/azure/templates/microsoft.dbformysql/flexibleservers?pivots=deployment-language-bicep])
-* For example, if we want to change the backup retention days to 15, we can paste below sample code into the file.
+* For example, if we want to change the backup retention days to 15, we can paste below sample code into the file (change the server name accordingly).
 
 {% highlight shell %}
 //localtion and server name are needed.
 param location string = resourceGroup().location
 resource mysql 'Microsoft.DBforMySQL/flexibleServers@2021-05-01' = {
-name: 'jiebicepmysql'
-location: location
-properties: {
-    backup: {
-    backupRetentionDays: 15
+    name: 'bicepmyfs'
+    location: location
+    properties: {
+        backup: {
+            backupRetentionDays: 15
+        }
     }
 }
-}
 {% endhighlight %}
 
-* Upload the <em>update.bicep</em> file to the Cloudshell.
-* Run the below command to update the resource we just created.
-
-{% highlight shell %}
-az deployment group create --resource-group exampleRG --template-file update.bicep
-{% endhighlight %}
+* Right click the <em>update.bicep</em> file choose "Deploy Bicep File".
+* Enter the required information.
 
